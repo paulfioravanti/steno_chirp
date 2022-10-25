@@ -1,8 +1,8 @@
 # Steno Chirp Application
 
-This is the codebase for the blog application created during the [Build a
-real-time Twitter clone with steno using LiveView and Phoenix 1.6][]
-video.
+This is the codebase for the Twitter-style timeline application created during
+the [Build a real-time Twitter clone with steno using LiveView and Phoenix
+1.6][] video.
 
 It is the same application created by [Chris McCord][], during his [Build a
 real-time Twitter clone in 15 minutes with LiveView and Phoenix 1.5][] video.
