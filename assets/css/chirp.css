@@ -1,0 +1,13 @@
+.post {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 15px 30px;
+}
+
+.post-avatar {
+  background: lightgrey;
+}
+
+.post-button {
+  margin-top: 15px;
+  text-align: center;
+}
