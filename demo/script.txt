@@ -1,0 +1,1468 @@
+Pre-flight checklist:
+
+- open Chrome private browser (clear browser data)
+- Open two tabs:
+  - https://www.phoenixframework.org/ (150% zoom)
+  - http://www.openstenoproject.org/ (150% zoom)
+  - SCROLL TO TOP OF BOTH PAGES
+- clear browser history
+- refresh Ctrl-P cache (F5)
+- mix ecto.drop -- destroy previous demo app databases
+- Press * to reset Plover layout display
+- reset steno tape and configure tape window to have
+  7 lines visible and be in "paper mode", with 36pt
+  font size, Lucida Grande font
+- clear terminal window, make window full screen size
+- cd into the `elixir` directory AND CLEAR
+- set iTerm profile to be Demo Mode
+- focus on brower, but put mouse cursor over TextEdit
+
+---
+
+- Welcome to a stenography-focused demo using Elixir,
+  Phoenix, and LiveView!
+- We're going to follow the same journey that Chris
+  McCord took us on in his "Build a real-time Twitter
+  clone in 15 minutes with LiveView and Phoenix 1.5"
+  demo, that's on the front page of the Phoenix Framework
+  website. However, we'll be using Phoenix 1.6, and we will
+  take a bit longer than 15 minutes since we'll be
+  doing more code longhand.
+- We'll also be doing the building using a stenographic
+  keyboard, the Georgi here
+<close tab, show Plover>
+- and Plover, an open source stenography engine.
+
+---
+
+- Stenography isn't just useful in courtrooms, but can be
+  used for any kind of text entry, even during software
+  development: in your text editor (including modal ones
+  like vim), the terminal, your browser, and even
+  controlling your computer.
+- So, let's started building with steno!
+
+<close browser window>
+
+---
+
+- Today we're going to write a Twitter timeline clone from
+  scratch using Phoenix LiveView. My goal is to show you
+  just how great LiveView is at building interactive
+  applications.
+- We're not going to have to write any JavaScript to make
+  it happen, and the amount of data that we write on the
+  wire at the end is going to be more efficient than the
+  best single page app that you could write by hand. If
+  that sounds crazy, or you're skeptical, stick with me and
+  I'm sure at the end that I'll have you convinced.
+- I tend to do all my coding in a terminal, so I will
+  leverage a program called tmux to allow me to use my
+  editor and server in the same terminal window.
+
+```
+tmux new
+```
+
+---
+
+- Okay, so to create a new application, we can run the
+  mix phoenix new command.
+- We'll call the application chirp,
+  and pass dash-dash-live to get the LiveView dependencies
+
+```
+mix phx.new chirp --live
+```
+
+- And we'll say "yes" to install our dependencies.
+<wait for installation to finish>
+
+---
+
+- Okay, let's cd into that directory.
+
+```
+cd chirp
+```
+
+- Then, we'll do what the instructions tell us, and
+  create our database using the mix ecto.create
+  command; Ecto being the Elixir database library
+  that Phoenix applications use
+
+```
+mix ecto.create
+```
+
+---
+
+- Looks like we've got a warning about the gettext
+  compiler no longer being required in our mix.exs
+  project file. That's going to be a bit annoying
+  to see everytime we run database operations, and
+  we won't be needing anything related to
+  internationalisation in this project, which is
+  what gettext handles, so let's quickly fix that.
+- We'll open up our mix.exs file, and go down to the
+  compilers line
+- We can see gettext there, so let's just remove it:
+
+<dtM>
+```
+compilers: Mix.compilers(),
+```
+
+---
+
+- We'll save that away and reset our database with
+  the mix ecto.reset command
+
+```
+mix ecto.reset
+```
+
+- And the warning is gone. Great!
+- And just before we move on, let's quickly
+  initialise a git repository so we can track our work.
+
+```
+git init
+```
+
+- And just save our first commit
+
+```
+git add .
+git commit --message="Initialize app"
+```
+
+---
+
+- Okay, to get started building, Phoenix includes a
+  phx.gen.live command, and this bootstraps a CRUD LiveView
+  which lets us hit the ground running.
+
+```
+mix phx.gen.live
+```
+
+- So, to build our Twitter-style timeline feature, let's
+  build a timeline
+
+```
+mix phx.gen.live Timeline
+```
+
+---
+
+- and the resource that we want it to
+  persist is a Post and the plural form of that is going
+  to be the database table, so we'll call it posts.
+
+```
+mix phx.gen.live Timeline Post posts
+```
+
+- and let's say a post should have some fields like
+  username, a body, and a couple of integer fields like
+  likes count and a reposts count.
+
+```
+mix phx.gen.live Timeline Post posts username body likes_count:integer reposts_count:integer
+```
+
+---
+
+- And this generated a handful of files, a couple of
+  LiveViews, a couple of templates, a migration file,
+  and so on.
+- And it told us we need to copy these live routes to
+  our router, so we'll go ahead and do that to make
+  these web-reachable.
+
+<KPHO*ED>
+<12 STPH-B>
+<V 5 STPH-R>
+<y q>
+<open router.ex>
+
+---
+
+- From here, we'll find our browser pipeline,
+  which serves browser requests
+
+<17 STPH-R>
+<clear search>
+
+- and we'll paste that in
+
+<PA*FT S*F>
+
+- We'll see these work in a moment. But first, we need
+  to run our migrations to actually create the posts
+  database table, and we can do that with the mix
+  ecto.migrate command
+
+```
+mix ecto.migrate
+```
+
+---
+
+- Now with everything in place, we can go and run
+  our server with mix phoenix.server and see what
+  this looks like.
+
+<open new tmux window>
+```
+mix phx.server
+```
+
+<open Chrome>
+<TKPWA*R>
+<localhost:4000/posts>
+<STKPW-PL to 150%>
+
+---
+
+- Okay, cool, so we're ready to go here. So we
+  have our tabular list of posts. It's not showing
+  anything yet cause we don't have any posts.
+
+<use vimium to click New Post>
+
+- If we click on New post, we can see a modal here
+  with the form fields we passed at the command line
+- But right away we know we have to do a bit of work
+  here: we will need to add validations for body, which
+  also needs to be a text area rather than a text field
+- and likes count and reposts count should not be user
+  editable.
+
+---
+
+- So let's go ahead and add some validations to get
+  started.
+- If we go into our form HTML template
+
+<use fuzzy find to look for form component.html.heex>
+<(may require refresh)>
+<show location in NERDTree>
+
+- which is in the live/post_live/form_component
+  template, this is where we're rendering that form,
+  and we know right away that most of these are not
+  user-editable fields, so we'll go ahead and just
+  remove them.
+
+<remove username fields>
+<remove body label field>
+<remove likes_count & reposts_count fields>
+
+---
+
+- And we can say the text input for the body is
+  going to be a textarea.
+
+```
+<%= textarea f, :body %>
+```
+
+- So we'll save that, go back
+
+<go back to browser and refresh>
+
+---
+
+- And okay, this is looking more like a Twitter
+  modal.
+- So we now need to go back to our application
+  and write some validations, and we can do that
+  in the timeline post module that was generated.
+
+<use fuzzy find to open post.ex>
+<show location in NERDTree>
+
+---
+
+- So underneath the timeline directory, we can
+  go into post, and here we can see Elixir's ecto
+  database library, and how it's mapping the
+  database table to an Elixir structure.
+- So, we know right away that the likes count
+  and the repos count should default to 0
+
+```
+field :likes_count, :integer, default: 0
+field :reposts_count, :integer, default: 0
+```
+
+---
+
+- and the username -- we don't have any users
+  so we'll just say that everyone is Chris'
+  username for now.
+
+<string snippet>
+<KREUS/RUPBD/PH-BG/KORD>
+<viw u> - downcase word
+```
+field :username, :string, default: "chris_mccord"
+```
+
+---
+
+- And down here we can see Ecto's changeset
+  abstraction, which is a way to build up a
+  data structure to track the changes that
+  we want to apply to the database
+- and as far as fields that are allowed to be
+  cast as user input, we know we can only
+  allow the body to be cast
+
+<go to beginning of list>
+<dtKHR-PB>
+<move to body comma>
+<dtPWR*BG>
+```
+cast(attrs, [:body])
+```
+
+---
+
+- and in fact we have to require the body to
+  be cast so that we can't create a post
+  without a body.
+
+<ciPWR-BG>
+<KHR-PB body>
+```
+validate_required([:body])
+```
+
+---
+
+- And here we can also add our own validations
+  to this data structure, like I wanna validate
+  the length of the body
+
+```
+|> validate_length(:body)
+```
+
+- and let's say the minimum amount is going to
+  be 10 characters, and the maximum is going
+  to be 250 characters, to mirror Twitter.
+
+```
+|> validate_length(:body, min: 10, max: 250)
+```
+
+---
+
+- So if I save that, and refresh here, let's
+  see what happens when I start typing.
+
+<go back to browser>
+<REFRESH>
+<type "new post">
+
+- And immediately I'm getting validations.
+
+<delete "new post">
+
+- If I leave it blank, it says it can't
+  be blank. So what's happening here?
+
+---
+
+- We're not shipping anything down to the
+  client, or converting any rules to JavaScript
+- what's happening is Phoenix LiveView
+  establishes a web socket connection over
+  this page, and in the same way as many client
+  side frameworks, like React,
+  any time our state changes on our view,
+  or in our component, our template's going to be
+  re-rendered, and the browser DOM is going to
+  be patched.
+- It's just in our case, we're running this
+  paradigm on the server, and sending those
+  minimal DOM patches over the wire via web
+  sockets, effectively giving us client-side
+  validations.
+
+---
+
+- So, here I can say, okay, I'm going to make a
+  new post
+
+<type "my new post">
+<click save with vimium>
+
+- click save
+- and we can see instantaneously this shows up
+  and that was so fast because we have live
+  navigation.
+- We use browser push state over that web socket
+  connection
+
+---
+
+- so if I click new post
+
+<click New Post with vimium>
+<select address bar with steno>
+
+- it goes to post/new
+- and it's doing that over web sockets so we don't
+  have to do the whole HTTP handshake over and over
+  and reload everything over HTTP.
+
+<steno escape to get out of address bar>
+<steno escape again to close modal>
+
+---
+
+- So, we have live navigation happening, we've got
+  realtime events, but our interface leaves a lot
+  to be desired here.
+- So, instead of this tabular list of data, let's
+  enhance this to be a little bit more proud about
+  our social timeline, here.
+- We can do that in the index template
+
+<fuzzy find post_live/index.html.heex>
+<show location in NERDTree>
+
+---
+
+- so if we go into chirp web/post_live/index html,
+  we can see this is where we are listing our posts.
+- And let's update this to say timeline.
+
+<change in tag to show "Timeline">
+
+- We have our logic for showing the modal or not
+
+<highlight modal logic>
+
+- and here we have our tabular list
+- and we're just doing a for comprehension saying
+  for post in posts in this template, render a
+  table row.
+
+<put cursor on for post...>
+
+---
+
+- So, let's make this make this a little bit fancier.
+- We're not gonna write any new features, but we're
+  gonna rewrite this markup.
+- So, let's delete this table, and replace it with
+  flex grid layout to make it a little bit more modern.
+
+<delete table down to tbody tag>
+<delete everything else aside from the for loop>
+<change tbody to a div>
+<highlight code and AEPBG to fix indentation>
+
+```
+<div id="posts">
+  <%= for post <- @posts do %>
+  <% end %>
+</div>
+```
+
+---
+
+- So, we're still going to go through our posts,
+  and instead of rendering all that markup in line,
+  let's use a live component that Phoenix provides
+  and compartmentalise what it means to render a post.
+
+---
+
+<live component snippet>
+
+- We'll call this component chirp_web dot post_live
+  dot post component, pass in the id as the post id,
+  and we'll pass each post along as the state for
+  this component.
+
+<assign value snippet>
+<SOEUPB -- assign>
+```
+<.live_component
+  module={ChirpWeb.PostLive.PostComponent}
+  id={post.id}
+  post={post}
+/>
+```
+
+---
+
+- And if we save this, live reload should kick in
+  and see that it blows up because post component
+  is not available, so we need to define that.
+- So, we'll go ahead in the post live directory and
+  create a new post component file
+
+<m>
+<create chirp_web/live/post_live/post_component.ex>
+
+---
+
+- and here's where I can say def module post component
+
+<defmodule snippet>
+```
+defmodule ChirpWeb.PostLive.PostComponent do
+  
+end
+```
+
+- and I can use phoenix live component to pull in
+  all the code to render a live component.
+
+<"use phoenix" snippet>
+```
+defmodule ChirpWeb.PostLive.PostComponent do
+  use ChirpWeb, :live_component
+end
+```
+
+---
+
+- And here's where I can co-locate a template like
+  the index HTML template, but LiveView also allows
+  me to define a render function
+
+<render snippet>
+
+- where I can embed markup directly next to my code,
+  which can be nice for smaller templates.
+- So let's go ahead and create a dressed up version
+  of that code we deleted.
+- There won't be any new features; we're just going
+  to go through and render the likes count,
+  the body, and the username, with
+  a grid row and column just to make this a
+  little prettier. Let's get to work.
+
+---
+
+```
+def render(assigns) do
+  ~H"""
+  <div id={"post-#{@post.id}"} class="post">
+
+<-- This row will contain the post avatar and body -->
+    <div class="row">
+      <div class="column column-10 post-avatar">
+      </div>
+      <div class="column column-90 post-body">
+        <strong>@<%= @post.username %></strong>
+        <br />
+        <%= @post.body %>
+      </div>
+    </div>
+
+<-- This row will contain post buttons -->
+    <div class="row">
+      <div class="column post-button">
+        <likes count svg snippet>
+        <%= @post.likes_count %>
+      </div>
+      <div class="column post-button">
+        <reposts count svg snippet>
+        <%= @post.reposts_count %>
+      </div>
+
+<-- Now to put in post control buttons -->
+      <div class="column post-button">
+        <%= live_patch to: Routes.post_index_path(@socket, :edit, @post.id) do %>
+          <edit post svg snippet>
+        <% end %>
+        <%= link to: "#", "phx-click": "delete", "phx-value-id": @post.id do %>
+          <delete post svg snippet>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  """
+end
+
+```
+
+---
+
+- Now we've done the template, we will also
+  need to create some styles to go with this
+  new markup, so let's create that now.
+- Go to the app.css file, and we'll import
+  a new file with all our chirp styles
+
+<PRO*RT import snippet>
+```
+@import "./chirp.css";
+```
+
+- Save that away, and let's create that new styling file
+
+---
+
+<create new chirp.css file>
+<R-PBLG rgba snippet>
+```
+.post {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  // vertical, horizontal
+  padding: 15px 30px;
+}
+
+.post-avatar {
+  // PW*BG
+  background: lightgrey;
+}
+
+.post-button-column {
+  margin-top: 15px;
+  text-align: center;
+}
+```
+
+---
+
+- So, if we save that and go back,
+
+<go back to browser>
+
+- this is looking a bit more like a social timeline.
+- But looks are not enough; social timelines need
+  to be realtime, and this is not realtime yet.
+- Because if I load two browsers side by side,
+
+<use Divvy to put current window 50% left>
+<open new incognito browser window TPH*UDZ>
+<use Divvy to put new window 50% right>
+
+- if I post something on the right, it should show up.
+
+<Click New Post on right hand browser>
+<input "This should show up, right?" and click save>
+
+---
+
+- And it doesn't.
+- I have to switch browser windows and manually refresh it to
+  see the new post. Not great for a social media timeline.
+- So, let's make this realtime and see how easy
+  Phoenix allows us to do this with Phoenix PubSub,
+  and it's just going to take a few lines to make it happen.
+- So, we can go into our timeline context module
+
+<fuzzy find timeline.ex>
+
+---
+
+- and these are the CRUD actions that Phoenix generated
+  to get started, and we can see that we've got a
+  list_posts function to get all the posts
+
+<highlight list_posts>
+
+- we can get an individual post
+
+<highlight get_post!>
+
+- and then we've have a couple of functions like
+  create and update post to write to the database.
+
+<highlight create_post>
+<place cursor at end of Repo.insert()>
+
+---
+
+- So, here's where we can say okay all we need to
+  do is broadcast to the world that a post is
+  created or updated. So let's write a function
+  and pipe result of this database write into a
+  broadcast function that we'll write.
+
+```
+|> broadcast()
+```
+
+- We'll broadcast an event that we'll call post
+  created,
+
+```
+|> broadcast(:post_created)
+```
+
+---
+
+- and likewise for update, we'll broadcast a
+  post updated event.
+
+<copy broadcast line to end of update_post>
+<change message to post_updated>
+
+```
+|> broadcast(:post_updated)
+```
+
+- And then all we need to do is define that
+  function.
+
+<move to bottom of file>
+
+---
+
+<def snippet>
+
+- So I'll say we need to broadcast these events,
+  but we need to handle the database writes failing,
+  cause it could fail for any reason.
+
+```
+defp broadcast({:error, _reason} = error, _event), do: error
+```
+
+- The database could be down, the post could be invalid,
+  and then we want to return that error to the caller.
+  So, we'll just maintain that caller contract.
+
+---
+
+<def snippet>
+
+- Likewise for the success case, we can pattern match on
+  okay post, which means the database write occurred,
+  and then we can return the okay post to the caller,
+  so we can maintain that contract.
+
+```
+defp broadcast({:ok, post}, event) do
+  {:ok, post}
+end
+```
+
+- Before we do that, we can broadcast over Phoenix PubSub.
+
+---
+
+<broadcast snippet>
+
+- So, we can say Phoenix PubSub dot broadcast chirp
+  dot PubSub since that's our PubSub server.
+- And we can say the topic is going to be some
+  global posts timeline topic
+- and the payload we pass through is going to contain
+  the event and our post created or updated.
+
+```
+defp broadcast({:ok, post}, event) do
+  Phoenix.PubSub.broadcast(Chirp.PubSub, "posts", {event, post})
+  {:ok, post}
+end
+```
+
+---
+
+- And that's it for broadcast.
+- So, then all we need to do is to allow our users to
+  subscribe to our events that we're broadcasting.
+
+<create new subscribe function above broadcast>
+<def snippet>
+
+- So, we can define a function, and call it subscribe.
+- It takes no arguments.
+- In here is where I can call Phoenix PubSub subscribe on to my PubSub server,
+
+---
+
+<subscribe snippet>
+
+```
+def subscribe do
+  Phoenix.PubSub.subscribe(Chirp.PubSub, "posts")
+end
+```
+
+- and we'll subscribe to that same posts topic.
+- And that's it. A handful of lines of code for
+  subscribe and broadcast.
+- And then to pick these up, I can then go into my
+  LiveView and subscribe to these events.
+
+---
+
+<fuzzy find index.ex>
+
+- So, I'll go into the index.ex file, which
+  renders the list of posts
+- and here we can see a mount callback.
+
+<highlight mount callback>
+
+- This is what gets called from LiveViews when
+  they're mounted on the page to be rendered.
+
+---
+
+- So, before we fetch the posts and assign some
+  template state, what we want to do is see if this
+  socket has an established web socket connection,
+  and if so just call that function we wrote: timeline
+  dot subscribe.
+
+<if: snippet>
+```
+def mount(_params, _session, socket) do
+  if connected?(socket), do: Timeline.subscribe()
+  {:ok, assign(socket, :posts, list_posts())}
+end
+```
+
+---
+
+- So, now we'll receive those messages with the
+  payload containing the event name and post,
+  and we just have to handle them in another callback.
+
+<move to bottom of file>
+
+- So Elixir messages arrive in a callback called
+  handle_info.
+
+---
+
+<handle info snippet>
+
+- We know that since we're subscribed we'll receive a
+  handle_info callback
+- and we expect to receive the payload we referenced
+  in the Timeline module: a tuple containing a
+  :post_created or :post_updated message, along with the post
+- and we always get our socket state as our last
+  argument from a LiveView.
+- we'll return noreply with the socket as we do not need to
+  send a response back to the Timeline module that
+  originally sent the message.
+
+```
+@impl true
+def handle_info({:post_created, post}, socket) do
+  {:noreply, socket}
+end
+```
+
+---
+
+- What we need to do, though, similar to React,
+  or other client side libraries, is update
+  our state in the socket.
+- If our state changes, our template gets
+  re-rendered, and the browser's gonna update.
+- So, let's update the socket:
+
+---
+
+- say, okay, we'll update the socket state;
+- let's update the post, and we're gonna take
+  the existing posts, and prepend the post on
+  to that list of posts.
+
+<update snippet>
+<function snippet>
+<list prepend snippet>
+```
+@impl true
+def handle_info({:post_created, post}, socket) do
+  socket = update(socket, :posts, fn posts -> [post | posts] end)
+  {:noreply, socket}
+end
+```
+
+---
+
+- And if the model works, and we receive these
+  broadcasts, and we change our state, then the
+  browser should just update.
+
+<go back to browsers>
+<refresh all tabs chord>
+
+- So, if we go back to our browser and refresh,
+  let's post something new.
+
+<vimium click New Post>
+<input Hello from the right>
+<click Save>
+
+- So, I can say hello from the right.
+- And we can see instantaneously this shows
+  up on the left hand side.
+
+---
+
+- And that's gonna work over any load balanced
+  cluster since Phoenix PubSub is distributed,
+  and it doesn't require any extra dependencies.
+- So, this is off to a great start, but we can
+  already see that our ordering is incorrect.
+- And in fact if I refresh this page
+
+<refresh all tabs>
+
+- then the post order flips. Let's fix that.
+- We go back to the index LiveView
+
+---
+
+<open index.ex>
+
+- and we can see that on mount we're calling
+  this list_posts function, which ultimately
+  just calls the Timeline.list_posts() function.
+- That's not currently giving us what we want,
+  so let's hop into that function and rewrite it.
+
+<open timeline.ex>
+
+- We can see that by default, Phoenix is just
+  saying return all posts in no particular order
+
+---
+
+<viw Post tab>
+<from snippet>
+<order snippet>
+
+- so let's write an Ecto query to say
+- from p in post, so from all the posts, let's order
+  by descending post id
+
+```
+def list_posts do
+  Repo.all(from p in Post, order_by: [desc: p.id])
+end
+```
+
+---
+
+- and this is the ecto query DSL, so this is
+  going to prevent SQL injections and all that
+  nice jazz.
+- So, we go back to the app
+
+<go back to browsers>
+<reload all tabs>
+
+- we're in our correct order.
+
+<in right browser click New Post>
+<write "Another new post!" and Save>
+
+- And we'll post a new post: Another new post!
+- And it shows up, just like that.
+
+---
+
+- Okay, this is looking really good, but we
+  haven't yet implemented the edit feature, cause
+  we know we're receiving edits coming over
+  the wire for updates as well. So, let's go
+  ahead and make sure we can receive a post update.
+
+<open index.ex>
+
+- We go back to our index. And it's going to be
+  very similar to our handle info clause
+
+---
+
+<copy handle_info clause>
+<paste below it>
+
+- if you remember we're broadcasting the updated
+  event as well, so we can say, okay, when the post
+  is updated, do the same thing
+
+<change message to post_updated>
+
+```
+@impl true
+def handle_info({:post_updated, post}, socket) do
+  socket = update(socket, :posts, fn posts -> [post | posts] end)
+  {:noreply, socket}
+end
+```
+
+---
+
+- I could go through the posts here and find the
+  post with the payload post's id, and rewrite
+  the list, but we can apply an optimisation in
+  this case because there's no reason for us to
+  hold all these posts in memory on the server,
+  and re-render them all just to change one.
+
+<move up to mount function>
+
+```
+@impl true
+def mount(_params, _session, socket) do
+  if connected?(socket), do: Timeline.subscribe()
+  socket = assign(socket, :posts, list_posts())
+  {:ok, socket}
+end
+```
+
+---
+
+- So Phoenix has a collection optimisation
+  which allows us to say okay some of these
+  assigns are going to be temporary, and I
+  don't need to hold on to them or track them
+  after I'm done rendering.
+
+---
+
+- So, we can just say okay posts assign --
+  any time it's dealt with, it's going be
+  tracked, and then we're going to throw it
+  away and reset it to an empty list after
+  we re-render.
+
+<temporary assigns snippet>
+```
+@impl true
+def mount(_params, _session, socket) do
+  if connected?(socket), do: Timeline.subscribe()
+  socket = assign(socket, :posts, list_posts())
+  {:ok, socket, temporary_assigns: [posts: []]}
+end
+```
+
+---
+
+- And then the only other side of this is to go
+  back to our index template for this LiveView
+- and annotate the DOM container to say
+  phx update equals prepend.
+
+<open index.html.heex>
+<phoenix update snippet>
+```
+<div id="posts" phx-update="prepend">
+...
+</div>
+```
+
+---
+
+- So, then when we patch the DOM on any update,
+  instead of replacing all the children,
+  only prepend new children. And this allows
+  us to efficiently handle the collection on
+  the server, over the wire, and on the client.
+- So, if we save that, and go back to the browser,
+
+<open browsers>
+
+- let's go and edit hello from the right, and
+  see what happens on the left hand side.
+
+---
+
+<vimium click edit icon>
+<KHRE> to get to end of string
+
+- So, we'll make it say "hello from the right (updated)".
+- And instantly, on the left, it just updates!
+- And the really cool thing here is if we look
+  at the data on the wire to make this happen,
+  it's incredibly tiny.
+
+---
+
+<open developer tools on left browser window>
+
+- So we can do that by enabling live socket debug on the client
+
+```
+liveSocket.enableDebug()
+```
+
+- and this just enables debug information
+- so let's re-update that row to say "how much data?".
+
+<update Hello from the right! (updated) to say "how much data?">
+
+- Hit save, and we can see the diff that
+  went across the wire here.
+
+---
+
+- So, the amount of data we wrote on the wire in
+  it's entirety ends up being a almost keyless
+  payload with literally just the value that we
+  can surgically stitch into the DOM here.
+- So, we didn't send down the username, or the
+  counts, we sent down nothing other than a tiny
+  component update and the browser had all the
+  information it needed to stitch that together in the
+  DOM, and this just comes out of the programming model.
+- No more json serializers, no more esoteric encoding
+  formats, you just get this for free.
+
+<close developer tools with the tools chord>
+
+---
+
+- Okay, so this is looking super good, but we need to
+  implement likes and reposts to close our feature
+  set out, so let's see how we go about managing those
+  interactions.
+- So, if we go to our post component
+
+<open POST component>
+
+- we can have client server interaction annotated
+  in our markup.
+- So, what we want is that when we click on our
+  like or repost count we want to send a message
+  to the server.
+
+---
+
+<V highlight likes count icon and press tab>
+<link snippet>
+
+- So, here I can write some markup and instead
+  of just linking somewhere, I can annotate with
+  phx click that I want to send a "like" event
+  to the server.
+- I want to target this to myself, because since
+  this is being rendered inside a LiveView,
+  we also can send events to our parent.
+- So, we want to say target this component itself
+  for this event.
+
+```
+<%= link to: "#", "phx-click": "like", "phx-target": @myself do %>
+  <svg viewBox="0 0 24 24"
+    ...
+  </svg>
+  <%= @post.likes_count %>
+<% end %>
+```
+
+---
+
+- And then I want to do the same thing for reposts,
+  except instead of sending the like event, I want
+  to send the "repost" event on click.
+
+<highlight reposts count icon and reference and press tab>
+<link snippet>
+
+```
+<%= link to: "#", "phx-click": "repost", "phx-target": @myself do %>
+  <svg viewBox="0 0 24 24"
+    ...
+  </svg>
+  <%= @post.reposts_count %>
+<% end %>
+```
+
+- And then I just need to handle that in a callback.
+
+---
+
+<move to end of file>
+
+- As apposed to internal Elixir events, which get handled
+  in handle_info callbacks, we handle client events in
+  a callback called handle event.
+- so I'll say def handle event.
+- I expect to see a "like" event without a payload,
+  so we just ignore those unsigned params
+- and I receive a socket with the component state as
+  the last argument.
+
+<handle event snippet>
+
+```
+@impl true
+def handle_event("like", _unsigned_params, socket) do
+  {:noreply, socket}
+end
+```
+
+---
+
+- And here instead of changing my component state,
+  I know that the system is going to broadcast these
+  updates, which gets picked up by a parent, which
+  re-renders the component template.
+- So, I can just say no reply, and return my state
+  unchanged, but before that I want to call into
+  the system and perform some side effects.
+- Let's say we're going to write a function in the
+  chirp dot timeline, say, inc_likes, and we can
+  pull the post out of our socket state.
+- So I can say socket assigns dot post.
+
+```
+@impl true
+def handle_event("like", _unsigned_params, socket) do
+  Chirp.Timeline.inc_likes(socket.assigns.post)
+  {:noreply, socket}
+end
+```
+
+---
+
+- And it's going to be the same story for handling
+  the reposts, so I'll just say handle the repost event,
+  and we'll call the function called inc_reposts.
+
+<copy handle_event function>
+<paste it below>
+<ciKW-T> change in quote
+
+```
+@impl true
+def handle_event("repost", _unsigned_params, socket) do
+  Chirp.Timeline.inc_reposts(socket.assigns.post)
+  {:noreply, socket}
+end
+```
+
+---
+
+- So, we can save that, and jump into the timeline
+  and write that function. So we'll go back to our timeline
+
+<go to timeline.ex>
+
+- and let's write that inc likes function
+  where we can pattern match on the post
+  struct we receive, grab the id out, 
+
+<def snippet>
+<struct post snippet>
+
+```
+def inc_likes(%Post{id: id}) do
+
+end
+```
+
+---
+
+- and here we want to perform an atomic
+  database write cause if we go through
+  the normal update process,
+  we could have race conditions.
+
+<from post snippet>
+
+- So we'll say from p in posts where p.id
+  is going to be equal to the id passed in
+- and we want to select the post that we write against
+  and return that
+
+```
+def inc_likes(%Post{id: id}) do
+  from(p in Post, where: p.id == ^id, select: p)
+end
+```
+
+---
+
+- then, we want to pipe that post to Repo dot update all
+- which is going to perform that atomic update.
+- And I can tell it to increment the integer field
+  likes count by 1.
+
+<update_all snippet>
+<inc snippet>
+```
+def inc_likes(%Post{id: id}) do
+  from(p in Post, where: p.id == ^id, select: p)
+  |> Repo.update_all(inc: [likes_count: 1])
+end
+```
+
+---
+
+- And this is going to return, inside of a tuple,
+  how many records were affected for this update,
+  which will be 1,
+- and we can pluck our post out of the list of results.
+
+<tuple snippet>
+```
+def inc_likes(%Post{id: id}) do
+  {1, [post]} =
+    from(p in Post, where: p.id == ^id, select: p)
+    |> Repo.update_all(inc: [likes_count: 1])
+end
+```
+
+---
+
+- And then, I have an updated post, and what can I do?
+- I can broadcast to the world that it was updated,
+  so I can call that broadcast function we wrote,
+  and pass in okay post, and the event passed will be
+  post_updated like before, and that should be it
+  for our atomic write.
+
+<tuple okay snippet>
+```
+def inc_likes(%Post{id: id}) do
+  {1, [post]} =
+    from(p in Post, where: p.id == ^id, select: p)
+    |> Repo.update_all(inc: [likes_count: 1])
+
+  broadcast({:ok, post}, :post_updated)
+end
+```
+
+---
+
+- And then, it's the same story for reposts,
+  except our field is going to change from
+  likes to reposts.
+
+<copy inc_likes function>
+<paste below>
+
+```
+def inc_reposts(%Post{id: id}) do
+  {1, [post]} =
+    from(p in Post, where: p.id == ^id, select: p)
+    |> Repo.update_all(inc: [reposts_count: 1])
+
+  broadcast({:ok, post}, :post_updated)
+end
+```
+
+---
+
+<go back to browsers>
+<REFRESH ALL TABS>
+
+- Let's refresh, and if the model works,
+  click this, and it works! Let's try likes,
+  there it goes!
+- And this is just happening, no extra RESTful
+  routes to define, no controllers, no serialisers
+- and the payload we put on the wire is even
+  more impressive than before, so let's check this out.
+
+---
+
+<open dev tools in left browser>
+
+- We check out the data that we wrote on the
+  wire to update this repost count: it was some
+  integer keys, and the repost count value literally to
+  surgically stitch in.
+- No keys on the payload; we didn't have to
+  send username, the body, or anything.
+
+---
+
+- Now that our app is finished, let's put it to bed by
+  checking it into git
+
+```
+git add .
+git commit --message="Finish app"
+```
+
+- So, I hope this convinces you that LiveView is an
+  incredibly compelling option to write highly
+  interactive, highly efficient applications without
+  having to write JavaScript.
+- and hopefully this demo has also been able to
+  demonstrate that you can use steno even during
+  software development to build cool apps like this.
+- thanks very much, and good luck on your own steno journey!
+
+Editing layer stack
+
+1. terminal
+2. keyboard diagram
+3. steno tape
+4. georgi
+5. video
+
+---
+
+Video description content:
+
+This is my attempt at re-creating Chris McCord's "Build a real-time Twitter clone in 15 minutes with LiveView and Phoenix 1.5" demo using Plover stenography on a Georgi keyboard.
+
+Everything was done in a single take in order to preserve an accurate keyboard stroke log (that rolling steno tape you see at the bottom right of the screen).
+
+- Chris McCord's original Build a real-time Twitter clone in 15 minutes with LiveView and Phoenix 1.5 video: https://www.youtube.com/watch?v=MZvmYaFkNJI
+- Phoenix Framework: https://www.phoenixframework.org/
+- Elixir Programming Language: https://elixir-lang.org/
+
+Q&A:
+
+- Where can I get more information on Plover?
+The Open Steno Project: http://www.openstenoproject.org/
+
+- How can I learn Plover/stenography?
+1. Start at the "Learning Resources" page on Plover's GitHub repository:
+https://github.com/openstenoproject/plover/wiki/Learning-Stenography
+2. I have also written a few posts covering steno:
+https://www.paulfioravanti.com/tags/#stenography
+3. Join the Plover discord where there are plenty of nice people to answer your questions: https://discord.me/plover
+
+- Where can I download Plover?
+From its GitHub repository: https://github.com/openstenoproject/plover/releases
+(click on the Assets link at the bottom of the page and download the version that's right for your operating system)
+
+- Where can I get a Georgi?
+From g Heavy Industries (if they're back up and running again...): https://www.gboards.ca/product/georgi
+
+- Where did you get your Georgi case?
+3D printed from a design available on Thingiverse: https://www.thingiverse.com/thing:3622551
+(I used the "deepest" version)
+
+- Is that a non-standard cable between the Georgi halves?
+I got it from an Ebay seller. Search for 1/8" 4-Pole 3.5mm TRRS Plug
+
+- Do you have your application code/steno tape output/demo script available anywhere?
+Sure do. It's on Github: https://github.com/paulfioravanti/chirp
+
+- You used a bunch of steno outlines that aren't in Plover! How?
+I've created a bunch of custom dictionaries with entries that enabled me to do all sorts of fancy things. You can find them on Github: https://github.com/paulfioravanti/steno-dictionaries
+
+- How were you able to hold down keys between chords?
+Custom firmware. You can find mine at this GitHub repository, along with instructions on how to use it on your own Georgi: https://github.com/paulfioravanti/qmk_keymaps
+
+- How did you get Vim to generate code for you just by typing some words?
+I created and used a bunch of snippets using Ultisnips: https://github.com/SirVer/ultisnips
+You can find my vim snippets here: https://github.com/paulfioravanti/vim-snippets
+
+- What were those letters on the browser that allowed you to click links?
+It's Vimium, a Chrome extension: https://chrome.google.com/webstore/detail/vimium/dbepggeogbaibhgnhhndojpepiihcmeb
+
+- How did you refresh all of the browser tabs at the same time?
+Using Reload All Tabs, a Chrome extension: https://chrome.google.com/webstore/detail/reload-all-tabs/midkcinmplflbiflboepnahkboeonkam
+
+- What software did you use to record and edit the demo?
+Screenflow: https://www.telestream.net/screenflow/

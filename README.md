@@ -1,19 +1,38 @@
-# Chirp
+# Steno Chirp Application
 
-To start your Phoenix server:
+This is the codebase for the blog application created during the [Build a
+real-time Twitter clone with steno using LiveView and Phoenix 1.6][]
+video.
 
-  * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.setup`
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+It is the same application created by [Chris McCord][], during his [Build a
+real-time Twitter clone in 15 minutes with LiveView and Phoenix 1.5][] video.
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+Artefacts from the steno demo itself can be found in the [`demo/`][] directory.
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+## Dependencies
 
-## Learn more
+- [Elixir][] 1.14.1-otp-25
+- [Phoenix][] 1.6
 
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+## Setup
+
+```sh
+git clone https://github.com/paulfioravanti/steno_chirp.git
+cd steno_chirp
+mix setup
+```
+
+## Run
+
+```sh
+mix phx.server
+```
+
+Open <http://localhost:4000/posts> in a web browser.
+
+[Build a real-time Twitter clone in 15 minutes with LiveView and Phoenix 1.5]: https://www.youtube.com/watch?v=MZvmYaFkNJI
+[Build a real-time Twitter clone with steno using LiveView and Phoenix 1.6]: https://www.youtube.com/watch?v=T_kMd7rxYU0
+[Chris McCord]: http://chrismccord.com/
+[`demo/`]: ./demo
+[Elixir]: https://elixir-lang.org/
+[Phoenix]: https://www.phoenixframework.org/
